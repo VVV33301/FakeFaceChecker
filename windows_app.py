@@ -2,22 +2,21 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QPixmap, QResizeEvent
 import sys
-import tensorflow as tf
+from keras import Model, models, utils
 from PIL import Image
 import numpy as np
-from random import uniform
 
-model: tf.keras.Model = tf.keras.models.load_model('./fakevsreal_weights_vova_0.h5')
+utils.disable_interactive_logging()
+model: Model = models.load_model('fakevsreal_weights_best_1.h5')
 
 
 def classify_image(file_path: str | bytes | bytearray) -> str:
     image: Image = Image.open(file_path).resize((128, 128)).convert("RGB")
     img: np.array = np.asarray(image)
     img: np.array = np.expand_dims(img, 0)
-    predictions: tf.keras.Model.predict = model.predict(img)
-    label: str = ['реальная', 'фейковая'][np.argmax(predictions[0])]
-    rand_proba: float = round(uniform(80, 95), 2)
-    return 'Эта фотография {} с вероятностью {}%'.format(label, rand_proba)
+    predictions: Model.predict = model.predict(img / 255)
+    return f"Эта фотография {['реальная', 'фейковая'][np.argmax(predictions[0])]} с вероятностью " \
+           f"{round(max(predictions[0]) * 100, 2)}%"
 
 
 class FakeFaceChecker(QWidget):
